@@ -1,0 +1,530 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// 1. AUTHENTICATION & USERS
+// -----------------------------------------------------------------------------
+
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  passwordHash      String?
+  name              String
+  phone             String?
+  role              String      @default("CUSTOMER")
+  preferredCurrency String      @default("USD")
+  preferredLanguage String      @default("en")
+  isVerified        Boolean     @default(false)
+  otpCode           String?
+  otpExpiresAt      DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  wishlists         Wishlist[]
+  carts             Cart[]
+
+  @@index([email])
+}
+
+model AdminUser {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  passwordHash      String
+  name              String
+  roleId            String
+  role              Role        @relation(fields: [roleId], references: [id])
+  twoFactorEnabled  Boolean     @default(false)
+  twoFactorSecret   String?
+  isActive          Boolean     @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  widgets           AdminDashboardWidget[]
+
+  @@index([email])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  slug        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  adminUsers  AdminUser[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  module      String
+  action      String
+  description String?
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+
+  @@unique([module, action])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+// -----------------------------------------------------------------------------
+// 2. CATALOG & INVENTORY
+// -----------------------------------------------------------------------------
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children    Category[] @relation("SubCategories")
+  displayOrder Int       @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  products     Product[]
+  customFields CustomFieldDefinition[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Product {
+  id                String           @id @default(cuid())
+  title             String
+  slug              String           @unique
+  description       String
+  shortDescription  String?
+  basePriceUSD      Float
+  compareAtPriceUSD Float?
+  costPriceUSD      Float?
+  sku               String           @unique
+  barcode           String?
+  categoryId        String
+  category          Category         @relation(fields: [categoryId], references: [id])
+  brand             String?
+  isFeatured        Boolean          @default(false)
+  isActive          Boolean          @default(true)
+  ratingAvg         Float            @default(0)
+  ratingCount       Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  variants          ProductVariant[]
+  images            ProductImage[]
+  reviews           Review[]
+  wishlists         Wishlist[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  customFieldValues CustomFieldValue[]
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([sku])
+  @@index([isFeatured, isActive])
+}
+
+model ProductVariant {
+  id                String       @id @default(cuid())
+  productId         String
+  product           Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku               String       @unique
+  title             String
+  priceOffsetUSD    Float        @default(0)
+  stockQuantity     Int          @default(0)
+  lowStockThreshold Int          @default(5)
+  attributes        String
+  image             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  images            ProductImage[]
+
+  @@index([productId])
+  @@index([sku])
+}
+
+model ProductImage {
+  id        String          @id @default(cuid())
+  productId String
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  url       String
+  altText   String?
+  sortOrder Int             @default(0)
+  isPrimary Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([productId])
+}
+
+// -----------------------------------------------------------------------------
+// 3. CUSTOM FIELDS ENGINE
+// -----------------------------------------------------------------------------
+
+model CustomFieldDefinition {
+  id               String              @id @default(cuid())
+  entityType       String
+  name             String
+  key              String
+  fieldType        String
+  options          String?
+  targetCategoryId String?
+  targetCategory   Category?           @relation(fields: [targetCategoryId], references: [id], onDelete: SetNull)
+  isRequired       Boolean             @default(false)
+  sortOrder        Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  values           CustomFieldValue[]
+
+  @@unique([entityType, key])
+}
+
+model CustomFieldValue {
+  id           String                @id @default(cuid())
+  definitionId String
+  definition   CustomFieldDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  entityId     String
+  product      Product?              @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  valueText    String?
+  valueNumber  Float?
+  valueJson    String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([definitionId])
+  @@index([entityId])
+}
+
+// -----------------------------------------------------------------------------
+// 4. CURRENCIES & EXCHANGE RATES
+// -----------------------------------------------------------------------------
+
+model Currency {
+  code          String         @id
+  name          String
+  symbol        String
+  symbolNative  String
+  decimalDigits Int            @default(2)
+  roundingRule  String         @default("NONE")
+  isBase        Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  displayOrder  Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  exchangeRates ExchangeRate[]
+}
+
+model ExchangeRate {
+  id           String    @id @default(cuid())
+  currencyCode String
+  currency     Currency  @relation(fields: [currencyCode], references: [code])
+  rateToBase   Float
+  source       String    @default("MANUAL")
+  updatedAt    DateTime  @updatedAt
+
+  @@index([currencyCode])
+}
+
+// -----------------------------------------------------------------------------
+// 5. CARTS & SHOPPING BAGS
+// -----------------------------------------------------------------------------
+
+model Cart {
+  id           String     @id @default(cuid())
+  userId       String?
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId    String?    @unique
+  currencyCode String     @default("USD")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  items        CartItem[]
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id        String          @id @default(cuid())
+  cartId    String
+  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  quantity  Int             @default(1)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([cartId])
+}
+
+// -----------------------------------------------------------------------------
+// 6. ORDERS & FULFILLMENT
+// -----------------------------------------------------------------------------
+
+model Order {
+  id                String       @id @default(cuid())
+  orderNumber       String       @unique
+  userId            String?
+  user              User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestEmail        String?
+  guestName         String?
+  guestPhone        String?
+  orderStatus       String       @default("PENDING")
+  paymentStatus     String       @default("UNPAID")
+  fulfillmentStatus String       @default("UNFULFILLED")
+  
+  currencyCode      String       @default("USD")
+  exchangeRateUsed  Float        @default(1.0)
+  
+  subtotalAmount    Float
+  shippingAmount    Float        @default(0)
+  taxAmount         Float        @default(0)
+  discountAmount    Float        @default(0)
+  totalAmount       Float
+  totalAmountUSD    Float
+  
+  shippingAddress   String
+  billingAddress    String
+  paymentMethod     String
+  shippingMethod    String?
+  trackingNumber    String?
+  trackingUrl       String?
+  couponCode        String?
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+
+  items             OrderItem[]
+  payments          Payment[]
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id             String          @id @default(cuid())
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product         @relation(fields: [productId], references: [id])
+  variantId      String?
+  variant        ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  title          String
+  variantTitle   String?
+  sku            String
+  unitPrice      Float
+  unitPriceUSD   Float
+  quantity       Int
+  totalPrice     Float
+  attributes     String?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// -----------------------------------------------------------------------------
+// 7. PAYMENTS & GATEWAYS
+// -----------------------------------------------------------------------------
+
+model PaymentGateway {
+  id                  String    @id @default(cuid())
+  name                String
+  slug                String    @unique
+  driver              String
+  isEnabled           Boolean   @default(false)
+  isTestMode          Boolean   @default(true)
+  supportedCurrencies String
+  supportedCountries  String
+  encryptedConfig     String
+  displayOrder        Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  payments            Payment[]
+}
+
+model Payment {
+  id                   String         @id @default(cuid())
+  orderId              String
+  order                Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gatewayId            String?
+  gateway              PaymentGateway? @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
+  gatewayTransactionId String?
+  amount               Float
+  currencyCode         String
+  status               String         @default("PENDING")
+  rawResponse          String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([orderId])
+}
+
+// -----------------------------------------------------------------------------
+// 8. SHIPPING, TAX & DISCOUNTS
+// -----------------------------------------------------------------------------
+
+model ShippingRule {
+  id                       String   @id @default(cuid())
+  name                     String
+  countryCode              String
+  regionCode               String?
+  baseFeeUSD               Float
+  freeShippingThresholdUSD Float?
+  estimatedDaysMin         Int      @default(3)
+  estimatedDaysMax         Int      @default(7)
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model TaxRule {
+  id                String   @id @default(cuid())
+  name              String
+  countryCode       String
+  regionCode        String?
+  ratePercentage    Float
+  isIncludedInPrice Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Coupon {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  discountType      String
+  discountValue     Float
+  minOrderAmountUSD  Float?
+  maxDiscountUSD    Float?
+  usageLimit        Int?
+  usageCount        Int       @default(0)
+  startDate         DateTime?
+  endDate           DateTime?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([code])
+}
+
+// -----------------------------------------------------------------------------
+// 9. REVIEWS, WISHLIST & ADDRESSES
+// -----------------------------------------------------------------------------
+
+model Review {
+  id                 String   @id @default(cuid())
+  productId          String
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName         String
+  rating             Int      @default(5)
+  title              String?
+  comment            String
+  isVerifiedPurchase Boolean  @default(false)
+  isApproved         Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Address {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName          String
+  phone             String
+  addressLine1      String
+  addressLine2      String?
+  city              String
+  state             String?
+  postalCode        String?
+  countryCode       String
+  isDefaultShipping Boolean  @default(false)
+  isDefaultBilling  Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// 10. ADMIN DASHBOARD & STORE SETTINGS
+// -----------------------------------------------------------------------------
+
+model AdminDashboardWidget {
+  id          String     @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser  @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  widgetKey   String
+  gridX       Int        @default(0)
+  gridY       Int        @default(0)
+  gridW       Int        @default(6)
+  gridH       Int        @default(4)
+  isVisible   Boolean    @default(true)
+  settings    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([adminUserId, widgetKey])
+}
+
+model StoreSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  group     String   @default("GENERAL")
+  updatedAt DateTime @updatedAt
+}
