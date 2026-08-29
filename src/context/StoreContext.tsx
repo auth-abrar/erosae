@@ -106,6 +106,19 @@ export function StoreProvider({
     }
   }, [wishlist, isMounted]);
 
+  // Sync HTML document language and Bengali font class
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = locale;
+      document.documentElement.setAttribute('data-lang', locale);
+      if (locale === 'bn') {
+        document.body.classList.add('font-bengali');
+      } else {
+        document.body.classList.remove('font-bengali');
+      }
+    }
+  }, [locale]);
+
   const setLocale = (newLoc: Locale) => {
     setLocaleState(newLoc);
     localStorage.setItem('erosae_locale', newLoc);

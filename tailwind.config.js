@@ -27,8 +27,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        bengali: ['var(--font-solaiman)', 'SolaimanLipi', 'Kalpurush', 'sans-serif'],
+        sans: ['var(--font-inter)', 'SolaimanLipi', 'var(--font-hind-siliguri)', 'system-ui', 'sans-serif'],
+        bengali: ['SolaimanLipi', 'var(--font-hind-siliguri)', 'Kalpurush', 'Noto Sans Bengali', 'sans-serif'],
       },
     },
   },

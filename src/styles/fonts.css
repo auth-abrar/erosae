@@ -1,21 +1,42 @@
-/* SolaimanLipi Official Bengali Web Font */
-@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
+/* SolaimanLipi & Bengali Typography Engine for Erosae.com */
 
 @font-face {
   font-family: 'SolaimanLipi';
-  src: url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.woff2') format('woff2'),
-       url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.woff') format('woff'),
-       url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/maateen/solaiman-lipi-fonts@master/SolaimanLipi.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/maateen/solaiman-lipi-fonts@master/SolaimanLipi.woff') format('woff'),
+       url('https://cdn.jsdelivr.net/gh/maateen/solaiman-lipi-fonts@master/SolaimanLipi.ttf') format('truetype'),
+       url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0980-09FF, U+0000-007F, U+200C, U+200D;
 }
 
+@font-face {
+  font-family: 'SolaimanLipi';
+  src: url('https://cdn.jsdelivr.net/gh/maateen/solaiman-lipi-fonts@master/SolaimanLipi.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/maateen/solaiman-lipi-fonts@master/SolaimanLipi.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0000-007F, U+200C, U+200D;
+}
+
+:root {
+  --font-bengali: 'SolaimanLipi', var(--font-hind-siliguri), 'Kalpurush', 'Noto Sans Bengali', system-ui, sans-serif;
+}
+
+/* Explicit class for Bengali text blocks */
 .font-bengali {
-  font-family: 'SolaimanLipi', Arial, sans-serif !important;
+  font-family: 'SolaimanLipi', var(--font-hind-siliguri), 'Kalpurush', 'Noto Sans Bengali', Arial, sans-serif !important;
 }
 
-/* Fallback ensuring all Bengali unicode characters default to SolaimanLipi */
-:lang(bn) {
-  font-family: 'SolaimanLipi', var(--font-inter), Arial, sans-serif;
+/* Automatic Bengali font inheritance when locale is set to 'bn' */
+html[lang="bn"],
+html[data-lang="bn"],
+body[data-lang="bn"],
+:lang(bn),
+[lang="bn"],
+.bn-text {
+  font-family: 'SolaimanLipi', var(--font-hind-siliguri), 'Kalpurush', 'Noto Sans Bengali', Arial, sans-serif !important;
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Hind_Siliguri } from 'next/font/google';
 import '@/styles/globals.css';
 import { StoreProvider } from '@/context/StoreContext';
 import { Header } from '@/components/storefront/Header';
@@ -9,6 +9,13 @@ import { CartDrawer } from '@/components/storefront/CartDrawer';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const hindSiliguri = Hind_Siliguri({
+  subsets: ['bengali'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-hind-siliguri',
   display: 'swap',
 });
 
@@ -25,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${hindSiliguri.variable}`}>
       <body className="font-sans antialiased bg-gray-50/50 text-gray-900 flex flex-col min-h-screen">
         <StoreProvider>
           <Header />

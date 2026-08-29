@@ -108,7 +108,6 @@ export function Footer() {
             <li><Link href="/legal/about" className="hover:text-white transition">{t('legal.about_us')}</Link></li>
             <li><Link href="/legal/terms" className="hover:text-white transition">{t('legal.terms_conditions')}</Link></li>
             <li><Link href="/legal/privacy" className="hover:text-white transition">{t('legal.privacy_policy')}</Link></li>
-            <li><Link href="/admin" className="text-brand-400 hover:text-brand-300 font-semibold">{t('nav.admin_panel')}</Link></li>
           </ul>
         </div>
       </div>

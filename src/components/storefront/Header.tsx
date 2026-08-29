@@ -79,15 +79,6 @@ export function Header() {
                 {locale === 'en' ? 'বাংলা' : 'English'}
               </button>
             </div>
-
-            {/* Admin Portal Link */}
-            <Link
-              href="/admin"
-              className="text-gray-300 hover:text-white hidden md:inline-flex items-center space-x-1 border-l border-white/20 pl-3"
-            >
-              <ShieldAlert className="w-3 h-3 text-red-400" />
-              <span>{t('nav.admin_panel')}</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -207,9 +198,6 @@ export function Header() {
             </Link>
             <Link href="/products?category=beauty-health" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-600">
               {isBengali ? 'বিউটি ও পার্সোনাল কেয়ার' : 'Beauty & Personal Care'}
-            </Link>
-            <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="text-red-600 font-bold pt-2 border-t">
-              {t('nav.admin_panel')}
             </Link>
           </div>
         </div>
