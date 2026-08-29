@@ -4,11 +4,11 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Admin Routes Protection (except /admin/login)
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // 1. Admin & ERP Routes Protection (except login)
+  if ((pathname.startsWith('/admin') || pathname.startsWith('/erp')) && pathname !== '/admin/login' && pathname !== '/erp/login') {
     const adminCookie = request.cookies.get('erosae_admin_session')?.value;
     if (!adminCookie) {
-      const loginUrl = new URL('/admin/login', request.url);
+      const loginUrl = new URL(pathname.startsWith('/erp') ? '/erp/login' : '/admin/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -38,5 +38,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/account/:path*'],
+  matcher: ['/admin/:path*', '/erp/:path*', '/account/:path*'],
 };

@@ -9,6 +9,22 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/erp',
+        destination: '/admin',
+      },
+      {
+        source: '/erp/login',
+        destination: '/admin/login',
+      },
+      {
+        source: '/erp/:path*',
+        destination: '/admin/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {
