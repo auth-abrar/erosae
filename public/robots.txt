@@ -1,0 +1,19 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /products/*
+Allow: /legal/*
+
+# Prevent indexing of sensitive or private paths
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /api/
+Disallow: /api/*
+Disallow: /account/
+Disallow: /account/*
+Disallow: /checkout/
+Disallow: /checkout/*
+Disallow: /cart
+
+Sitemap: https://erosae.com/sitemap.xml

@@ -1,0 +1,21 @@
+/* SolaimanLipi Official Bengali Web Font */
+@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
+
+@font-face {
+  font-family: 'SolaimanLipi';
+  src: url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.woff2') format('woff2'),
+       url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.woff') format('woff'),
+       url('https://fonts.maateen.me/solaiman-lipi/SolaimanLipi.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-bengali {
+  font-family: 'SolaimanLipi', Arial, sans-serif !important;
+}
+
+/* Fallback ensuring all Bengali unicode characters default to SolaimanLipi */
+:lang(bn) {
+  font-family: 'SolaimanLipi', var(--font-inter), Arial, sans-serif;
+}
